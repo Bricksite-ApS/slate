@@ -342,6 +342,8 @@ export const Editable = (props: EditableProps) => {
         }
 
         let native = false
+
+        //TODO: Figure out why selection is not here initially in safari and firefox
         if (
           type === 'insertText' &&
           selection &&
@@ -380,6 +382,11 @@ export const Editable = (props: EditableProps) => {
               native = false
             }
           }
+        }
+
+        //Hotfix for safari issues
+        if (!selection && (IS_FIREFOX || IS_SAFARI)) {
+          native = true
         }
 
         if (!native) {
