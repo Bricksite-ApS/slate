@@ -68,6 +68,7 @@
     "babel-jest": "27.0.6",
     "babel-plugin-dev-expression": "^0.2.2",
     "babel-plugin-module-resolver": "^3.1.1",
+    "bricksite-slate-react": "workspace:*",
     "cypress": "^8.3.0",
     "eslint": "^6.7.1",
     "eslint-config-prettier": "^6.7.0",
@@ -108,7 +109,6 @@
     "slate": "workspace:*",
     "slate-history": "workspace:*",
     "slate-hyperscript": "workspace:*",
-    "slate-react": "workspace:*",
     "source-map-loader": "^0.2.4",
     "ts-jest": "^27.1.3",
     "typescript": "3.9.7"
