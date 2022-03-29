@@ -52,6 +52,8 @@ import {
   PLACEHOLDER_SYMBOL,
   EDITOR_TO_WINDOW,
 } from '../utils/weak-maps'
+import ShadowSelection from '../@types/shadowSelection'
+import useSelection from '../hooks/useSelection'
 
 type DeferredOperation = () => void
 
@@ -125,6 +127,10 @@ export const Editable = (props: EditableProps) => {
     as: Component = 'div',
     ...attributes
   } = props
+
+  // POLYFILL
+
+  const brickSelection = useSelection()
   const editor = useSlate()
   // Rerender editor when composition status changed
   const [isComposing, setIsComposing] = useState(false)
@@ -162,8 +168,9 @@ export const Editable = (props: EditableProps) => {
     // Make sure the DOM selection state is in sync.
     const { selection } = editor
     const root = ReactEditor.findDocumentOrShadowRoot(editor)
-    const domSelection = root.getSelection()
+    const domSelection = brickSelection || root.getSelection()
 
+    console.log(domSelection)
     if (state.isComposing || !domSelection || !ReactEditor.isFocused(editor)) {
       return
     }
@@ -263,6 +270,7 @@ export const Editable = (props: EditableProps) => {
   // while a selection is being dragged.
   const onDOMSelectionChange = useCallback(
     throttle(() => {
+      console.log('editable.tsx:onDomSelectionChange')
       if (
         !state.isComposing &&
         !state.isUpdatingSelection &&
@@ -317,6 +325,8 @@ export const Editable = (props: EditableProps) => {
   // https://github.com/facebook/react/issues/11211
   const onDOMBeforeInput = useCallback(
     (event: InputEvent) => {
+      console.log('editable.tsx:onDOMBeforeInput')
+
       if (
         !readOnly &&
         hasEditableTarget(editor, event.target) &&
@@ -329,6 +339,7 @@ export const Editable = (props: EditableProps) => {
         onDOMSelectionChange.flush()
 
         const { selection } = editor
+
         const { inputType: type } = event
         const data = (event as any).dataTransfer || event.data || undefined
 
@@ -342,6 +353,7 @@ export const Editable = (props: EditableProps) => {
         }
 
         let native = false
+
         if (
           type === 'insertText' &&
           selection &&
@@ -442,7 +454,9 @@ export const Editable = (props: EditableProps) => {
           }
 
           case 'deleteHardLineBackward': {
-            Editor.deleteBackward(editor, { unit: 'block' })
+            Editor.deleteBackward(editor, {
+              unit: 'block',
+            })
             break
           }
 
@@ -452,7 +466,9 @@ export const Editable = (props: EditableProps) => {
           }
 
           case 'deleteHardLineForward': {
-            Editor.deleteForward(editor, { unit: 'block' })
+            Editor.deleteForward(editor, {
+              unit: 'block',
+            })
             break
           }
 
@@ -732,6 +748,8 @@ export const Editable = (props: EditableProps) => {
           )}
           onClick={useCallback(
             (event: React.MouseEvent<HTMLDivElement>) => {
+              console.log('editable.tsx:onClick')
+
               if (
                 !readOnly &&
                 hasTarget(editor, event.target) &&
@@ -751,8 +769,12 @@ export const Editable = (props: EditableProps) => {
                     const start = Editor.start(editor, path)
                     const end = Editor.end(editor, path)
 
-                    const startVoid = Editor.void(editor, { at: start })
-                    const endVoid = Editor.void(editor, { at: end })
+                    const startVoid = Editor.void(editor, {
+                      at: start,
+                    })
+                    const endVoid = Editor.void(editor, {
+                      at: end,
+                    })
 
                     if (
                       startVoid &&
@@ -827,6 +849,7 @@ export const Editable = (props: EditableProps) => {
           )}
           onCompositionStart={useCallback(
             (event: React.CompositionEvent<HTMLDivElement>) => {
+              console.log('editable.tsx:onCompositionStart')
               if (
                 hasEditableTarget(editor, event.target) &&
                 !isEventHandled(event, attributes.onCompositionStart)
@@ -929,6 +952,8 @@ export const Editable = (props: EditableProps) => {
           )}
           onDragStart={useCallback(
             (event: React.DragEvent<HTMLDivElement>) => {
+              console.log('editable.tsx:onDragStart')
+
               if (
                 !readOnly &&
                 hasTarget(editor, event.target) &&
@@ -938,7 +963,10 @@ export const Editable = (props: EditableProps) => {
                 const path = ReactEditor.findPath(editor, node)
                 const voidMatch =
                   Editor.isVoid(editor, node) ||
-                  Editor.void(editor, { at: path, voids: true })
+                  Editor.void(editor, {
+                    at: path,
+                    voids: true,
+                  })
 
                 // If starting a drag on a void node, make sure it is selected
                 // so that it shows up in the selection's fragment.
@@ -956,6 +984,8 @@ export const Editable = (props: EditableProps) => {
           )}
           onDrop={useCallback(
             (event: React.DragEvent<HTMLDivElement>) => {
+              console.log('editable.tsx:onDrop')
+
               if (
                 !readOnly &&
                 hasTarget(editor, event.target) &&
@@ -976,7 +1006,10 @@ export const Editable = (props: EditableProps) => {
                   if (
                     draggedRange &&
                     !Range.equals(draggedRange, range) &&
-                    !Editor.void(editor, { at: range, voids: true })
+                    !Editor.void(editor, {
+                      at: range,
+                      voids: true,
+                    })
                   ) {
                     Transforms.delete(editor, {
                       at: draggedRange,
@@ -1089,13 +1122,18 @@ export const Editable = (props: EditableProps) => {
                 // (2017/10/17)
                 if (Hotkeys.isMoveLineBackward(nativeEvent)) {
                   event.preventDefault()
-                  Transforms.move(editor, { unit: 'line', reverse: true })
+                  Transforms.move(editor, {
+                    unit: 'line',
+                    reverse: true,
+                  })
                   return
                 }
 
                 if (Hotkeys.isMoveLineForward(nativeEvent)) {
                   event.preventDefault()
-                  Transforms.move(editor, { unit: 'line' })
+                  Transforms.move(editor, {
+                    unit: 'line',
+                  })
                   return
                 }
 
@@ -1111,7 +1149,10 @@ export const Editable = (props: EditableProps) => {
 
                 if (Hotkeys.isExtendLineForward(nativeEvent)) {
                   event.preventDefault()
-                  Transforms.move(editor, { unit: 'line', edge: 'focus' })
+                  Transforms.move(editor, {
+                    unit: 'line',
+                    edge: 'focus',
+                  })
                   return
                 }
 
@@ -1124,9 +1165,13 @@ export const Editable = (props: EditableProps) => {
                   event.preventDefault()
 
                   if (selection && Range.isCollapsed(selection)) {
-                    Transforms.move(editor, { reverse: !isRTL })
+                    Transforms.move(editor, {
+                      reverse: !isRTL,
+                    })
                   } else {
-                    Transforms.collapse(editor, { edge: 'start' })
+                    Transforms.collapse(editor, {
+                      edge: 'start',
+                    })
                   }
 
                   return
@@ -1136,9 +1181,13 @@ export const Editable = (props: EditableProps) => {
                   event.preventDefault()
 
                   if (selection && Range.isCollapsed(selection)) {
-                    Transforms.move(editor, { reverse: isRTL })
+                    Transforms.move(editor, {
+                      reverse: isRTL,
+                    })
                   } else {
-                    Transforms.collapse(editor, { edge: 'end' })
+                    Transforms.collapse(editor, {
+                      edge: 'end',
+                    })
                   }
 
                   return
@@ -1148,10 +1197,15 @@ export const Editable = (props: EditableProps) => {
                   event.preventDefault()
 
                   if (selection && Range.isExpanded(selection)) {
-                    Transforms.collapse(editor, { edge: 'focus' })
+                    Transforms.collapse(editor, {
+                      edge: 'focus',
+                    })
                   }
 
-                  Transforms.move(editor, { unit: 'word', reverse: !isRTL })
+                  Transforms.move(editor, {
+                    unit: 'word',
+                    reverse: !isRTL,
+                  })
                   return
                 }
 
@@ -1159,10 +1213,15 @@ export const Editable = (props: EditableProps) => {
                   event.preventDefault()
 
                   if (selection && Range.isExpanded(selection)) {
-                    Transforms.collapse(editor, { edge: 'focus' })
+                    Transforms.collapse(editor, {
+                      edge: 'focus',
+                    })
                   }
 
-                  Transforms.move(editor, { unit: 'word', reverse: isRTL })
+                  Transforms.move(editor, {
+                    unit: 'word',
+                    reverse: isRTL,
+                  })
                   return
                 }
 
@@ -1197,7 +1256,9 @@ export const Editable = (props: EditableProps) => {
                     event.preventDefault()
 
                     if (selection && Range.isExpanded(selection)) {
-                      Editor.deleteFragment(editor, { direction: 'backward' })
+                      Editor.deleteFragment(editor, {
+                        direction: 'backward',
+                      })
                     } else {
                       Editor.deleteBackward(editor)
                     }
@@ -1209,7 +1270,9 @@ export const Editable = (props: EditableProps) => {
                     event.preventDefault()
 
                     if (selection && Range.isExpanded(selection)) {
-                      Editor.deleteFragment(editor, { direction: 'forward' })
+                      Editor.deleteFragment(editor, {
+                        direction: 'forward',
+                      })
                     } else {
                       Editor.deleteForward(editor)
                     }
@@ -1221,9 +1284,13 @@ export const Editable = (props: EditableProps) => {
                     event.preventDefault()
 
                     if (selection && Range.isExpanded(selection)) {
-                      Editor.deleteFragment(editor, { direction: 'backward' })
+                      Editor.deleteFragment(editor, {
+                        direction: 'backward',
+                      })
                     } else {
-                      Editor.deleteBackward(editor, { unit: 'line' })
+                      Editor.deleteBackward(editor, {
+                        unit: 'line',
+                      })
                     }
 
                     return
@@ -1233,9 +1300,13 @@ export const Editable = (props: EditableProps) => {
                     event.preventDefault()
 
                     if (selection && Range.isExpanded(selection)) {
-                      Editor.deleteFragment(editor, { direction: 'forward' })
+                      Editor.deleteFragment(editor, {
+                        direction: 'forward',
+                      })
                     } else {
-                      Editor.deleteForward(editor, { unit: 'line' })
+                      Editor.deleteForward(editor, {
+                        unit: 'line',
+                      })
                     }
 
                     return
@@ -1245,9 +1316,13 @@ export const Editable = (props: EditableProps) => {
                     event.preventDefault()
 
                     if (selection && Range.isExpanded(selection)) {
-                      Editor.deleteFragment(editor, { direction: 'backward' })
+                      Editor.deleteFragment(editor, {
+                        direction: 'backward',
+                      })
                     } else {
-                      Editor.deleteBackward(editor, { unit: 'word' })
+                      Editor.deleteBackward(editor, {
+                        unit: 'word',
+                      })
                     }
 
                     return
@@ -1257,9 +1332,13 @@ export const Editable = (props: EditableProps) => {
                     event.preventDefault()
 
                     if (selection && Range.isExpanded(selection)) {
-                      Editor.deleteFragment(editor, { direction: 'forward' })
+                      Editor.deleteFragment(editor, {
+                        direction: 'forward',
+                      })
                     } else {
-                      Editor.deleteForward(editor, { unit: 'word' })
+                      Editor.deleteForward(editor, {
+                        unit: 'word',
+                      })
                     }
 
                     return
@@ -1285,7 +1364,9 @@ export const Editable = (props: EditableProps) => {
                         Editor.isInline(editor, currentNode)
                       ) {
                         event.preventDefault()
-                        Editor.deleteBackward(editor, { unit: 'block' })
+                        Editor.deleteBackward(editor, {
+                          unit: 'block',
+                        })
 
                         return
                       }
