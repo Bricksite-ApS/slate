@@ -1,7 +1,7 @@
 {
   "name": "slate-react",
-  "description": "Tools for building completely customizable richtext editors with React.",
-  "version": "0.76.0",
+  "description": "Tools for building completely customizable richtext editors with React. Customized to fit Bricksite ApS",
+  "version": "0.76.4",
   "license": "MIT",
   "repository": "git://github.com/ianstormtaylor/slate.git",
   "main": "dist/index.js",
